@@ -1,23 +1,19 @@
-
-
-FROM registry.access.redhat.com/ubi8/ubi:8.0
+# Use the httpd-parent image as base
+FROM quay.io/redhattraining/httpd-parent
 
 MAINTAINER ANY <any>
 
-ENV 	DOCROOT=/var/www/html
 
-RUN	yum install -y --setopt=tsflags=nodocs --disableplugin=subscription-manager httpd && \
-	yum clean all -y --disableplugin=subscription-manager
+LABEL 	io.openshift.expose-services="8080:http" \
+	io.openshift.tags="httpd, apache" \
+	io.k8s.description="A Apache server web" \
+	io.k8s.display-name="Apache server"
 
-ONBUILD COPY src/ ${DOCROOT}
+EXPOSE	8080
 
-EXPOSE	80
+RUN	sed -i 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf && \
+	chgroup -R 0 /var/log/httpd /var/run/httpd && \
+	chmod -R u:g /var/log/httpd /var/run/httpd
 
-RUN rm -rf /run/httpd && mkdir /run/httpd
-
-USER root
-
-CMD /usr/sbin/httpd -DFOREGROUND
-
-
+USER 1001
 
